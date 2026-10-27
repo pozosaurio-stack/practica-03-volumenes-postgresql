@@ -1,0 +1,76 @@
+PRÁCTICA N.º 3 — REGISTRO DE EJECUCIÓN
+Fecha: 26 de octubre de 2026
+Imagen: postgres:17
+Docker Desktop: 4.97.0
+Docker Engine (Client/Server): 29.9.2
+Backend: Linux sobre WSL 2
+
+=== PARTE 1: POSTGRESQL SIN VOLUMEN NOMBRADO REUTILIZABLE ===
+
+1. Se creó server_db1 y PostgreSQL aceptó conexiones.
+
+/var/run/postgresql:5432 - accepting connections
+
+2. Se creó test, la tabla customer y dos registros.
+
+CREATE DATABASE
+CREATE TABLE
+INSERT 0 2
+
+ id |   fullname   | status
+----+--------------+--------
+  1 | Ana Torres   | t
+  2 | Luis Mendoza | f
+(2 rows)
+
+3. Se detuvo y eliminó server_db1 junto con su volumen anónimo.
+4. Se creó nuevamente server_db1 sin reutilizar almacenamiento.
+5. La consulta al catálogo no encontró la base test.
+
+COMPROBADO: la base de datos test no existe en el contenedor recreado.
+
+=== PARTE 2: POSTGRESQL CON EL VOLUMEN NOMBRADO PGDATA ===
+
+1. Se creó pgdata y se montó en /var/lib/postgresql/data.
+2. Se creó server_db2, la base test, la tabla customer y dos registros.
+
+CREATE DATABASE
+CREATE TABLE
+INSERT 0 2
+
+ id |   fullname   | status
+----+--------------+--------
+  1 | Ana Torres   | t
+  2 | Luis Mendoza | f
+(2 rows)
+
+3. Se detuvo y eliminó server_db2 sin eliminar pgdata.
+4. docker volume inspect pgdata confirmó:
+
+Driver: local
+Mountpoint: /var/lib/docker/volumes/pgdata/_data
+Name: pgdata
+Scope: local
+
+5. Se creó nuevamente server_db2 con el mismo volumen.
+6. PostgreSQL aceptó conexiones y se consultó customer.
+
+ id |   fullname   | status
+----+--------------+--------
+  1 | Ana Torres   | t
+  2 | Luis Mendoza | f
+(2 rows)
+
+SELECT COUNT(*) FROM customer;
+Resultado: 2
+
+COMPROBADO: test, customer y sus 2 registros persistieron en pgdata.
+
+=== ESTADO FINAL ===
+
+server_db1: detenido
+server_db2: en ejecución, puerto 5432 publicado
+pgdata: conservado, controlador local
+
+La práctica terminó correctamente.
+
